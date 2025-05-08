@@ -1,5 +1,6 @@
 import pygame
 import random
+import sys
 
 # Initialize Pygame
 pygame.init()
@@ -25,6 +26,8 @@ dog_img = pygame.image.load('game_assets/dog_enemy.png')
 heart_img = pygame.image.load('game_assets/heart.png')
 sahur_img = pygame.image.load('game_assets/sahur.png')
 background_img = pygame.image.load('game_assets/background_resize.jpg')
+tralala_img = pygame.image.load('game_assets/tralalelo.png')
+bombardilo_img = pygame.image.load('game_assets/bomb.png')
 
 # enemy_img = pygame.image.load('enem.png')
 
@@ -142,11 +145,25 @@ class Enemy(pygame.sprite.Sprite):
         # If the enemy collides with the player, damage the player
         if self.rect.colliderect(player.rect):
             player.take_damage(1)  # Enemy attacks the player with damage 1
+            
+
 
     def take_damage(self, amount):
         self.health -= amount
         if self.health <= 0:
             self.kill()  # Remove the enemy if health reaches 0
+    
+    def display_health(self, surface, camera_x):
+        # Display enemy health above the enemy
+        health_text = font.render(f"Health: {self.health}", True, BLACK)
+        surface.blit(health_text, (self.rect.x - camera_x, self.rect.y - 30))
+        # Draw health bar
+        # health_bar_x = self.rect.x
+        # health_bar_y = self.rect.y - 10
+        # pygame.draw.rect(surface, RED, (health_bar_x, health_bar_y, 50, 5))  # Background
+            
+        
+        
 
 class DogEnemy(Enemy):
     def __init__(self, x, y, health=50):
@@ -172,6 +189,16 @@ class SahurEnemy(Enemy):
         self.image = pygame.transform.scale(self.image, (70, 70))
         self.speed = 1  # Sahur is slower than regular enemies
 
+    # Create a new enemy
+class TralalaEnemy(Enemy):
+    def __init__(self, x, y, health=50):
+        super().__init__(x, y, health)
+        self.image = tralala_img
+        self.image = pygame.transform.scale(self.image, (200, 150))
+        
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.speed = 1.5  # Tralala is slower than regular enemies
+
     def update(self, player):
         # Move towards the player with decreased speed
         if self.rect.x < player.rect.x:
@@ -182,6 +209,27 @@ class SahurEnemy(Enemy):
         # If the sahur collides with the player, deal less damage
         if self.rect.colliderect(player.rect):
             player.take_damage(0.5)  # Sahur attacks the player with damage 0.5
+
+class BombardiloEnemy(Enemy):
+    def __init__(self, x, y, health=50):
+        super().__init__(x, y, health)
+        self.image = bombardilo_img
+        self.image = pygame.transform.scale(self.image, (50, 50))
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.speed = 2
+
+    def update(self, player):
+        # Move towards the player with increased speed
+        if self.rect.x < player.rect.x:
+            self.rect.x += self.speed
+        elif self.rect.x > player.rect.x:
+            self.rect.x -= self.speed
+
+        # If the bombardilo collides with the player, deal more damage
+        if self.rect.colliderect(player.rect):
+            player.take_damage(3)  # Bombardilo attacks the player with damage 3
+
+
 # Collectible class
 class Collectible(pygame.sprite.Sprite):
     def __init__(self, x, y, type):
@@ -199,8 +247,37 @@ class Heart(Collectible):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.type = type
 
-    
+  # --- Level Loading Function ---
+# This function will load different enemies and collectibles based on the level number  
+def load_level(level, all_sprites, enemies, collectibles):
+    # Clear previous level's enemies and collectibles
+    enemies.empty()
+    collectibles.empty()
+    all_sprites.empty()
 
+    # Load different setups for each level
+    if level == 1:
+        # Level 1 setup
+        enemy1 = SahurEnemy(600, HEIGHT - 75, 100)
+        enemy2 = DogEnemy(700, HEIGHT - 60, 100)
+        enemies.add(enemy1, enemy2)
+        collectibles.add(Heart(400, HEIGHT - 40, 'health'))
+
+    elif level == 2:
+        # Level 2 setup
+        enemy1 = TralalaEnemy(800, HEIGHT - 140, 120)
+        enemies.add(enemy1)
+        collectibles.add(Heart(600, HEIGHT - 40, 'life'))
+
+    elif level == 3:
+        # Level 3 setup - Boss Level
+        boss = BombardiloEnemy(1500, HEIGHT - 90, 300)
+        enemies.add(boss)
+        collectibles.add(Heart(800, HEIGHT - 40, 'health'))
+
+    # Add them to all_sprites for easier group management
+    all_sprites.add(enemies)
+    all_sprites.add(collectibles)
 # Groups
 
 
@@ -212,7 +289,15 @@ def display_game_over():
     screen.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, HEIGHT // 2))
     pygame.display.flip()
 
-def maingame():
+def display_level_complete():
+    level_complete_text = large_font.render("LEVEL COMPLETE", True, BLACK)
+    next_level_text = font.render("Press N for Next Level or Q to Quit", True, BLACK)
+    screen.fill(WHITE)
+    screen.blit(level_complete_text, (WIDTH // 2 - level_complete_text.get_width() // 2, HEIGHT // 3))
+    screen.blit(next_level_text, (WIDTH // 2 - next_level_text.get_width() // 2, HEIGHT // 2))
+    pygame.display.flip()
+
+def maingame(level=1):
     all_sprites = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     collectibles = pygame.sprite.Group()
@@ -221,18 +306,11 @@ def maingame():
     # all_sprites.add(player)   # We'll manually draw with camera offset
     all_sprites.add(player.projectiles)  # We'll draw projectiles manually too
 
-    # Example enemies
-    enemy1 = SahurEnemy(600, HEIGHT - 75, 100)
-    enemy2 = DogEnemy(700, HEIGHT - 60, 100)
-    enemies.add(enemy1, enemy2)
-    all_sprites.add(enemies)
-
-    # Example collectible
-    heart = Heart(400, HEIGHT - 40, 'health')
-    collectibles.add(heart)
-    all_sprites.add(heart)
+    
 
     bg_scroll = 0
+    current_level = level
+    load_level(current_level, all_sprites, enemies, collectibles)
 
     # Game loop
     running = True
@@ -287,8 +365,11 @@ def maingame():
 
         # Enemies
         for enemy in enemies:
+            enemy.display_health(screen, camera_x)  # Display enemy health above the enemy
             enemy.update(player)
+            
             screen.blit(enemy.image, (enemy.rect.x - camera_x, enemy.rect.y))
+            
 
         # Collectibles
         for collectible in collectibles:
@@ -296,7 +377,7 @@ def maingame():
 
         # Health bar (fixed on screen)
         player.draw_health_bar(screen)
-
+        
         # Check player health
         if player.health <= 0:
             display_game_over()
@@ -313,7 +394,25 @@ def maingame():
                             waiting_for_input = False
                             running = False
 
-        pygame.display.flip()
+        if len(enemies) == 0:
+            display_level_complete()
+            waiting_for_input = True
+            while waiting_for_input:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_n:  # Next level
+                            maingame(current_level + 1)
+                            waiting_for_input = False
+                        if event.key == pygame.K_q:  # Quit the game
+                            pygame.quit()
+                            sys.exit()
+                    
+        pygame.display.flip()    
+
+        
 
     pygame.quit()
 
