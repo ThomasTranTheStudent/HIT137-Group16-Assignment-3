@@ -214,7 +214,7 @@ class BombardiloEnemy(Enemy):
     def __init__(self, x, y, health=50):
         super().__init__(x, y, health)
         self.image = bombardilo_img
-        self.image = pygame.transform.scale(self.image, (50, 50))
+        self.image = pygame.transform.scale(self.image, (300, 300))
         self.rect = self.image.get_rect(topleft=(x, y))
         self.speed = 2
 
@@ -258,6 +258,7 @@ def load_level(level, all_sprites, enemies, collectibles):
     # Load different setups for each level
     if level == 1:
         # Level 1 setup
+        # enemy1 = SahurEnemy(600, HEIGHT - 75, 100)
         enemy1 = SahurEnemy(600, HEIGHT - 75, 100)
         enemy2 = DogEnemy(700, HEIGHT - 60, 100)
         enemies.add(enemy1, enemy2)
@@ -271,7 +272,7 @@ def load_level(level, all_sprites, enemies, collectibles):
 
     elif level == 3:
         # Level 3 setup - Boss Level
-        boss = BombardiloEnemy(1500, HEIGHT - 90, 300)
+        boss = BombardiloEnemy(1500, HEIGHT - 200, 300)
         enemies.add(boss)
         collectibles.add(Heart(800, HEIGHT - 40, 'health'))
 
