@@ -171,12 +171,14 @@ class Enemy(pygame.sprite.Sprite):
     
     def display_health(self, surface, camera_x):
         # Display enemy health above the enemy
-        health_text = font.render(f"Health: {self.health}", True, BLACK)
-        surface.blit(health_text, (self.rect.x - camera_x, self.rect.y - 30))
+        # health_text = font.render(f"Health: {self.health}", True, BLACK)
+        # surface.blit(health_text, (self.rect.x - camera_x, self.rect.y - 30))
         # Draw health bar
-        # health_bar_x = self.rect.x
-        # health_bar_y = self.rect.y - 10
-        # pygame.draw.rect(surface, RED, (health_bar_x, health_bar_y, 50, 5))  # Background
+        health_bar_x = self.rect.x
+        health_bar_y = self.rect.y - 10
+    
+        pygame.draw.rect(surface, RED, (health_bar_x - camera_x, health_bar_y, 50, 5))  # Background
+        pygame.draw.rect(surface, GREEN, (health_bar_x - camera_x, health_bar_y, self.health, 5))  # Health fill
             
         
         
