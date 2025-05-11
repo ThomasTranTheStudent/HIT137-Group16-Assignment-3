@@ -33,7 +33,7 @@ bombardilo_img = pygame.image.load('game_assets/bomb.png')
 
 # Player class
 class Player(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, score):
         super().__init__()
         self.original = animal_img
         self.original = pygame.transform.scale(self.original, (50, 50))
@@ -51,6 +51,7 @@ class Player(pygame.sprite.Sprite):
         self.lives = 3
         self.projectiles = pygame.sprite.Group()
         self.max_health = 100
+        self.score = score
 
     def update(self, keys):
         if keys:
@@ -89,6 +90,10 @@ class Player(pygame.sprite.Sprite):
         self.health += amount
         if self.health > self.max_health:
             self.health = self.max_health
+    def increase_score(self, amount):
+        self.score += amount
+        if self.score < 0:
+            self.score = 0
 
     def draw_health_bar(self, surface):
         # Fixed position at the top-left corner
@@ -101,9 +106,18 @@ class Player(pygame.sprite.Sprite):
         
         # Health bar background (red)
         pygame.draw.rect(surface, RED, (health_bar_x, health_bar_y, self.max_health, 10))
-        
+      
         # Health bar fill (green)
         pygame.draw.rect(surface, GREEN, (health_bar_x, health_bar_y, self.health, 10))
+    
+    def draw_score(self, surface):
+        # Fixed position at the top-left corner
+        score_x = 40
+        score_y = 70
+        
+        # Draw score text
+        score_text = font.render(f"Score: {self.score}", True, BLACK)
+        surface.blit(score_text, (score_x, score_y))
 
 # Projectile class
 class Projectile(pygame.sprite.Sprite):
@@ -134,6 +148,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.health = 50
         self.speed = 2
+        
 
     def update(self, player):
         # Simple behavior: Move towards the player
@@ -148,10 +163,11 @@ class Enemy(pygame.sprite.Sprite):
             
 
 
-    def take_damage(self, amount):
+    def take_damage(self, amount, player):
         self.health -= amount
         if self.health <= 0:
             self.kill()  # Remove the enemy if health reaches 0
+            player.increase_score(10)  # Increase player's score when enemy is killed
     
     def display_health(self, surface, camera_x):
         # Display enemy health above the enemy
@@ -298,11 +314,11 @@ def display_level_complete():
     screen.blit(next_level_text, (WIDTH // 2 - next_level_text.get_width() // 2, HEIGHT // 2))
     pygame.display.flip()
 
-def maingame(level=1):
+def maingame(level=1, current_score=0):
     all_sprites = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     collectibles = pygame.sprite.Group()
-    player = Player()
+    player = Player(current_score)
 
     # all_sprites.add(player)   # We'll manually draw with camera offset
     all_sprites.add(player.projectiles)  # We'll draw projectiles manually too
@@ -346,6 +362,7 @@ def maingame(level=1):
                 projectile.kill()
                 if hit.health <= 0:
                     hit.kill()
+                    player.increase_score(10)
 
         # Collision: player collects items
         collected = pygame.sprite.spritecollide(player, collectibles, True)
@@ -378,7 +395,8 @@ def maingame(level=1):
 
         # Health bar (fixed on screen)
         player.draw_health_bar(screen)
-        
+        player.draw_score(screen) 
+         
         # Check player health
         if player.health <= 0:
             display_game_over()
@@ -405,7 +423,7 @@ def maingame(level=1):
                         sys.exit()
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_n:  # Next level
-                            maingame(current_level + 1)
+                            maingame(current_level + 1, player.score)
                             waiting_for_input = False
                         if event.key == pygame.K_q:  # Quit the game
                             pygame.quit()
