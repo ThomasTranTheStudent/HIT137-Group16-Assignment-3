@@ -178,7 +178,7 @@ class Enemy(pygame.sprite.Sprite):
         health_bar_y = self.rect.y - 10
     
         pygame.draw.rect(surface, RED, (health_bar_x - camera_x, health_bar_y, 50, 5))  # Background
-        pygame.draw.rect(surface, GREEN, (health_bar_x - camera_x, health_bar_y, self.health, 5))  # Health fill
+        pygame.draw.rect(surface, GREEN, (health_bar_x - camera_x, health_bar_y, self.health, 5))  # Fill the health bar
             
         
         
