@@ -17,7 +17,7 @@ CROP_RECT_COLOR = "blue"                                # Color of the cropping 
 CROP_RECT_WIDTH = 5                                     # Thickness of the cropping rectangle
 MIN_RESIZE_PERCENT = 5                                  # Minimum resize scale (5%)
 MAX_RESIZE_PERCENT = 300                                # Maximum resize scale (300%)
-DEFAULT_RESIZE_PERCENT = 150                            # Default resize scale (15050%)
+DEFAULT_RESIZE_PERCENT = 150                            # Default resize scale (150%)
 SAVE_FILETYPES = [("PNG", "*.png"), ("JPEG", "*.jpg")]  # File types for saving
 
 # Main application class
@@ -101,6 +101,7 @@ class PhotoEditorApp:
         if path:
             self.original_image = cv2.imread(path)
             self.edited_image = self.original_image.copy()
+            self.resize_base_image = self.edited_image.copy()
             self.image_history.clear()
             self.redo_stack.clear()
             self._update_original_canvas()
@@ -116,9 +117,9 @@ class PhotoEditorApp:
         if self.edited_image is None:
             return
         percent = int(float(value))
-        w = int(self.edited_image.shape[1] * percent / 100)
-        h = int(self.edited_image.shape[0] * percent / 100)
-        resized = cv2.resize(self.edited_image, (w, h), interpolation=cv2.INTER_AREA)
+        w = int(self.resize_base_image.shape[1] * percent / 100)
+        h = int(self.resize_base_image.shape[0] * percent / 100)
+        resized = cv2.resize(self.resize_base_image, (w, h), interpolation=cv2.INTER_AREA)
         self.edited_image = resized
         self._update_edit_canvas()
 
@@ -163,6 +164,9 @@ class PhotoEditorApp:
         x0, y0, _, _ = self.crop_coords
         self.crop_coords = (x0, y0, event.x, event.y)
         self._update_edit_canvas()
+        # Clear previous rectangle if it exists
+        if self.crop_rectangle:
+            self.edit_canvas.delete(self.crop_rectangle)
         self.crop_rectangle = self.edit_canvas.create_rectangle(
             x0, y0, event.x, event.y, outline=CROP_RECT_COLOR, width=CROP_RECT_WIDTH)
 
@@ -170,13 +174,21 @@ class PhotoEditorApp:
         x1, y1, x2, y2 = self.crop_coords
         x1, x2 = sorted([x1, x2])
         y1, y2 = sorted([y1, y2])
-        h, w = self.edited_image.shape[:2]
-        if x2 <= x1 or y2 <= y1 or x2 > w or y2 > h:
+        # Map canvas to image coordinates
+        canvas_w = self.edit_canvas.winfo_width()
+        canvas_h = self.edit_canvas.winfo_height()
+        img_h, img_w = self.edited_image.shape[:2]
+        scale_x = img_w / canvas_w
+        scale_y = img_h / canvas_h
+        ix1, ix2 = int(x1 * scale_x), int(x2 * scale_x)
+        iy1, iy2 = int(y1 * scale_y), int(y2 * scale_y)
+        if ix2 <= ix1 or iy2 <= iy1 or ix2 > img_w or iy2 > img_h:
             return
         self.image_history.append(self.edited_image.copy())
         self.redo_stack.clear()
-        self.edited_image = self.edited_image[y1:y2, x1:x2]
+        self.edited_image = self.edited_image[iy1:iy2, ix1:ix2]
         self.cropped_image = self.edited_image.copy()
+        self.resize_base_image = self.edited_image.copy()
         self._update_edit_canvas()
         self._update_cropped_canvas()
         self.edit_canvas.unbind("<ButtonPress-1>")
