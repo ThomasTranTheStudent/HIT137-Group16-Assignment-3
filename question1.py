@@ -272,16 +272,16 @@ class PhotoEditorApp:
             self.edit_canvas.delete(self.crop_rectangle)
             self.crop_rectangle = None
 
-        def _on_mouse_drag(self, event):
-            # Draw cropping rectangle while dragging
-            x0, y0, _, _ = self.crop_coords
-            self.crop_coords = (x0, y0, event.x, event.y)
-            self._update_edit_canvas()
-            # Clear previous rectangle if it exists
-            if self.crop_rectangle:
-                self.edit_canvas.delete(self.crop_rectangle)
-            self.crop_rectangle = self.edit_canvas.create_rectangle(
-                x0, y0, event.x, event.y, outline=CROP_RECT_COLOR, width=CROP_RECT_WIDTH)
+    def _on_mouse_drag(self, event):
+        # Draw cropping rectangle while dragging
+        x0, y0, _, _ = self.crop_coords
+        self.crop_coords = (x0, y0, event.x, event.y)
+        self._update_edit_canvas()
+        # Clear previous rectangle if it exists
+        if self.crop_rectangle:
+            self.edit_canvas.delete(self.crop_rectangle)
+        self.crop_rectangle = self.edit_canvas.create_rectangle(
+            x0, y0, event.x, event.y, outline=CROP_RECT_COLOR, width=CROP_RECT_WIDTH)
 
     def _on_mouse_release(self, event):
         # Finalize crop and update image
