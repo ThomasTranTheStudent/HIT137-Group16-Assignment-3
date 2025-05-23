@@ -1,5 +1,8 @@
+# Display a message to inform the user that some libraries must be installed before running the script
 print("Before running this script, make sure you have installed the required libraries:")
+# Provide the user with instructions on how to install the necessary libraries
 print("To install the necessary libraries, run:")
+# Show the exact pip command to install OpenCV and Pillow
 print("'pip install opencv-python' and 'pip install pillow'")
 
 # Import necessary libraries
@@ -19,6 +22,8 @@ MIN_RESIZE_PERCENT = 5                                  # Minimum resize scale (
 MAX_RESIZE_PERCENT = 300                                # Maximum resize scale (300%)
 DEFAULT_RESIZE_PERCENT = 150                            # Default resize scale (150%)
 SAVE_FILETYPES = [("PNG", "*.png"), ("JPEG", "*.jpg")]  # File types for saving
+PREVIEW_SIZE = 200
+BLUR_KERNEL = (9, 9)
 
 # Main application class
 class PhotoEditorApp:
@@ -65,16 +70,19 @@ class PhotoEditorApp:
         self._create_button("Undo", self.undo, "Ctrl+Z")
         self._create_button("Redo", self.redo, "Ctrl+Y")
 
+        # Resize slider
         ttk.Label(self.left_frame, text="Resize (%)").pack(pady=5)
         self.resize_slider = ttk.Scale(
             self.left_frame, from_=MIN_RESIZE_PERCENT, to=MAX_RESIZE_PERCENT,
             command=self.resize_image, orient="horizontal")
         self.resize_slider.set(DEFAULT_RESIZE_PERCENT)
         self.resize_slider.pack()
-        
+
+        # Canvas for displaying editable image
         self.edit_canvas = tk.Canvas(self.center_frame, bg="gray")
         self.edit_canvas.pack(fill="both", expand=True)
 
+        # Canvases for displaying original and cropped images
         ttk.Label(self.right_frame, text="Original Image").pack(pady=5)
         self.original_canvas = tk.Canvas(self.right_frame, width=200, height=200, bg="lightgray")
         self.original_canvas.pack()
@@ -83,12 +91,14 @@ class PhotoEditorApp:
         self.cropped_canvas = tk.Canvas(self.right_frame, width=200, height=200, bg="lightgray")
         self.cropped_canvas.pack()
 
+    # Helper method to create a button with a shortcut label
     def _create_button(self, text, command, shortcut):
         frame = ttk.Frame(self.left_frame)
         frame.pack(pady=2, fill='x')
         ttk.Button(frame, text=text, command=command).pack(side='left', padx=5)
         ttk.Label(frame, text=shortcut).pack(side='right')
 
+    # Bind keyboard shortcuts to functions
     def _bind_shortcuts(self):
         self.root.bind('<Control-o>', lambda e: self.open_image())
         self.root.bind('<Control-c>', lambda e: self.activate_crop())
@@ -96,6 +106,7 @@ class PhotoEditorApp:
         self.root.bind('<Control-y>', lambda e: self.redo())
         self.root.bind('<Control-s>', lambda e: self.save_image())
 
+    # Load image from file and reset the editor state
     def open_image(self):
         path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png *.jpg *.jpeg *.bmp")])
         if path:
@@ -107,12 +118,14 @@ class PhotoEditorApp:
             self._update_original_canvas()
             self._update_edit_canvas()
 
+    # Enable crop mode with mouse bindings
     def activate_crop(self):
         if self.edited_image is not None:
             self.edit_canvas.bind("<ButtonPress-1>", self._on_mouse_press)
             self.edit_canvas.bind("<B1-Motion>", self._on_mouse_drag)
             self.edit_canvas.bind("<ButtonRelease-1>", self._on_mouse_release)
 
+    # Resize image based on slider value
     def resize_image(self, value):
         if self.edited_image is None:
             return
@@ -123,6 +136,7 @@ class PhotoEditorApp:
         self.edited_image = resized
         self._update_edit_canvas()
 
+    # Save the edited image to file
     def save_image(self):
         if self.edited_image is not None:
             path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=SAVE_FILETYPES)
@@ -130,6 +144,7 @@ class PhotoEditorApp:
                 cv2.imwrite(path, self.edited_image)
                 messagebox.showinfo("Saved", "Image saved successfully.")
 
+    # Apply grayscale effect
     def apply_grayscale(self):
         if self.edited_image is not None:
             self.image_history.append(self.edited_image.copy())
@@ -138,6 +153,7 @@ class PhotoEditorApp:
             self.edited_image = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
             self._update_edit_canvas()
 
+    # Apply blur effect
     def apply_blur(self):
         if self.edited_image is not None:
             self.image_history.append(self.edited_image.copy())
@@ -145,21 +161,25 @@ class PhotoEditorApp:
             self.edited_image = cv2.GaussianBlur(self.edited_image, (9, 9), 0)
             self._update_edit_canvas()
 
+    # Undo last action
     def undo(self):
         if self.image_history:
             self.redo_stack.append(self.edited_image.copy())
             self.edited_image = self.image_history.pop()
             self._update_edit_canvas()
 
+    # Redo previously undone action
     def redo(self):
         if self.redo_stack:
             self.image_history.append(self.edited_image.copy())
             self.edited_image = self.redo_stack.pop()
             self._update_edit_canvas()
 
+    # Capture starting coordinates of crop
     def _on_mouse_press(self, event):
         self.crop_coords = (event.x, event.y, event.x, event.y)
 
+    # Draw cropping rectangle while dragging
     def _on_mouse_drag(self, event):
         x0, y0, _, _ = self.crop_coords
         self.crop_coords = (x0, y0, event.x, event.y)
@@ -170,6 +190,7 @@ class PhotoEditorApp:
         self.crop_rectangle = self.edit_canvas.create_rectangle(
             x0, y0, event.x, event.y, outline=CROP_RECT_COLOR, width=CROP_RECT_WIDTH)
 
+    # Finalize crop and update image
     def _on_mouse_release(self, event):
         x1, y1, x2, y2 = self.crop_coords
         x1, x2 = sorted([x1, x2])
@@ -195,24 +216,29 @@ class PhotoEditorApp:
         self.edit_canvas.unbind("<B1-Motion>")
         self.edit_canvas.unbind("<ButtonRelease-1>")
 
+    # Update original image preview canvas
     def _update_original_canvas(self):
         self._draw_image_on_canvas(self.original_canvas, self.original_image, max_size=200)
 
+    # Update editable canvas with the current working image
     def _update_edit_canvas(self):
         self.edit_canvas.delete("all")
         if self.edited_image is not None:
             self.tk_image = self._get_tk_image(self.edited_image)
             self.edit_canvas.create_image(0, 0, anchor="nw", image=self.tk_image)
 
+    # Update cropped image canvas
     def _update_cropped_canvas(self):
         if self.cropped_image is not None:
             self._draw_image_on_canvas(self.cropped_canvas, self.cropped_image, max_size=200)
 
+    # Convert OpenCV image to Tkinter-compatible image
     def _get_tk_image(self, image):
         rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_pil = Image.fromarray(rgb)
         return ImageTk.PhotoImage(image_pil)
 
+    # Draw any image onto a canvas and auto-resize to fit
     def _draw_image_on_canvas(self, canvas, image, max_size=200):
         rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         h, w = image.shape[:2]
@@ -225,6 +251,7 @@ class PhotoEditorApp:
         canvas.create_image(0, 0, anchor="nw", image=tk_image)
         canvas.image = tk_image
 
+# Run the application
 if __name__ == "__main__":
     root = tk.Tk()
     app = PhotoEditorApp(root)
