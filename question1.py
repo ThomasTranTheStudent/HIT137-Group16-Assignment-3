@@ -22,8 +22,6 @@ MIN_RESIZE_PERCENT = 5                                  # Minimum resize scale (
 MAX_RESIZE_PERCENT = 300                                # Maximum resize scale (300%)
 DEFAULT_RESIZE_PERCENT = 150                            # Default resize scale (150%)
 SAVE_FILETYPES = [("PNG", "*.png"), ("JPEG", "*.jpg")]  # File types for saving
-PREVIEW_SIZE = 200
-BLUR_KERNEL = (9, 9)
 
 # Main application class
 class PhotoEditorApp:
