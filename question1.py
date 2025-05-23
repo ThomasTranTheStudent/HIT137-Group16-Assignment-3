@@ -152,8 +152,8 @@ class PhotoEditorApp:
         self._create_button("Open Image", self.open_image, "Ctrl+O")
         self._create_button("Crop Image", self.activate_crop, "Ctrl+C")
         self._create_button("Save Image", self.save_image, "Ctrl+S")
-        self._create_button("Grayscale", self.apply_grayscale, "Ctrl+G"))
-        self._create_button("Blur", self.apply_blur, "Ctrl+B"))
+        self._create_button("Grayscale", self.apply_grayscale, "Ctrl+G")
+        self._create_button("Blur", self.apply_blur, "Ctrl+B")
         self._create_button("Undo", self.undo, "Ctrl+Z")
         self._create_button("Redo", self.redo, "Ctrl+Y")
         self._create_button("Reset", self.reset_image, "Ctrl+R")
@@ -273,17 +273,17 @@ class PhotoEditorApp:
             self.crop_rectangle = None
 
         def _on_mouse_drag(self, event):
-        # Draw cropping rectangle while dragging
-        x0, y0, _, _ = self.crop_coords
-        self.crop_coords = (x0, y0, event.x, event.y)
-        self._update_edit_canvas()
-        # Clear previous rectangle if it exists
-        if self.crop_rectangle:
-            self.edit_canvas.delete(self.crop_rectangle)
-        self.crop_rectangle = self.edit_canvas.create_rectangle(
-            x0, y0, event.x, event.y, outline=CROP_RECT_COLOR, width=CROP_RECT_WIDTH)
+            # Draw cropping rectangle while dragging
+            x0, y0, _, _ = self.crop_coords
+            self.crop_coords = (x0, y0, event.x, event.y)
+            self._update_edit_canvas()
+            # Clear previous rectangle if it exists
+            if self.crop_rectangle:
+                self.edit_canvas.delete(self.crop_rectangle)
+            self.crop_rectangle = self.edit_canvas.create_rectangle(
+                x0, y0, event.x, event.y, outline=CROP_RECT_COLOR, width=CROP_RECT_WIDTH)
 
-        def _on_mouse_release(self, event):
+    def _on_mouse_release(self, event):
         # Finalize crop and update image
         if self.edited_image is None:
             return
