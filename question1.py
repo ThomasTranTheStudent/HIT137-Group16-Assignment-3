@@ -113,6 +113,8 @@ class ImageManager:
             self.resize_base = self.current.copy()
             self.history.clear()
             self.redo_stack.clear()
+            return True
+        return False
 
 # --- Main Application Class ---
 class PhotoEditorApp:
