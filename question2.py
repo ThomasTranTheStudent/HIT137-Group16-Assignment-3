@@ -308,6 +308,14 @@ def display_game_over():
     screen.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, HEIGHT // 2))
     pygame.display.flip()
 
+def display_game_won():
+    game_won_text = large_font.render("YOU WON!", True, BLACK)
+    restart_text = font.render("Press R to Restart or Q to Quit", True, BLACK)
+    screen.fill(WHITE)
+    screen.blit(game_won_text, (WIDTH // 2 - game_won_text.get_width() // 2, HEIGHT // 3))
+    screen.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, HEIGHT // 2))
+    pygame.display.flip()
+
 def display_level_complete():
     level_complete_text = large_font.render("LEVEL COMPLETE", True, BLACK)
     next_level_text = font.render("Press N for Next Level or Q to Quit", True, BLACK)
@@ -416,6 +424,18 @@ def maingame(level=1, current_score=0):
                             running = False
 
         if len(enemies) == 0:
+            if current_level == 3:
+                display_game_won()
+                waiting_for_input = True
+                while waiting_for_input:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            sys.exit()
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_r:  # Restart the game
+                                maingame()
+                                waiting_for_input = False
             display_level_complete()
             waiting_for_input = True
             while waiting_for_input:
