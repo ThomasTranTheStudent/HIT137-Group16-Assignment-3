@@ -11,15 +11,17 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Animal Hero vs Human Enemies")
 clock = pygame.time.Clock()
 
-# Colors
+# Define some color constants
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLACK = (0, 0, 0)
 
+# Set fonts for UI text
 font = pygame.font.SysFont("Arial", 24)
 large_font = pygame.font.SysFont("Arial", 48)
-# Load assets here (placeholder)
+
+# Load all image assets
 animal_img = pygame.image.load('game_assets/monkey_hero.png')
 bullet_img= pygame.image.load('game_assets/bullet.png')
 dog_img = pygame.image.load('game_assets/dog_enemy.png')
@@ -31,10 +33,11 @@ bombardilo_img = pygame.image.load('game_assets/bomb.png')
 
 # enemy_img = pygame.image.load('enem.png')
 
-# Player class
+# ------------------ Player Class ------------------ #
 class Player(pygame.sprite.Sprite):
     def __init__(self, score):
         super().__init__()
+        # Set up player image and properties
         self.original = animal_img
         self.original = pygame.transform.scale(self.original, (50, 50))
         self.image = self.original
@@ -54,6 +57,7 @@ class Player(pygame.sprite.Sprite):
         self.score = score
 
     def update(self, keys):
+        # Player movement and jumping
         if keys:
             if keys[pygame.K_LEFT]:
                 self.rect.x -= 5
@@ -68,9 +72,11 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_UP] and self.rect.bottom >= HEIGHT:
             self.vel_y = self.jump_power
 
+        # Apply gravity
         self.vel_y += self.gravity
         self.rect.y += self.vel_y
 
+        # Stay on the ground
         if self.rect.bottom >= HEIGHT:
             self.rect.bottom = HEIGHT
             self.vel_y = 0
@@ -78,18 +84,22 @@ class Player(pygame.sprite.Sprite):
         self.projectiles.update()
 
     def shoot(self):
+        # Create a projectile and add to player's group
         proj = Projectile(self.rect.right, self.rect.centery, self.facing_right)
         self.projectiles.add(proj)
     
     def take_damage(self, amount):
+        # Reduce player's health
         self.health -= amount
         if self.health < 0:
             self.health = 0
 
     def collect_health(self, amount):
+        # Heal the player
         self.health += amount
         if self.health > self.max_health:
             self.health = self.max_health
+            
     def increase_score(self, amount):
         self.score += amount
         if self.score < 0:
@@ -100,14 +110,14 @@ class Player(pygame.sprite.Sprite):
         health_bar_x = 40
         health_bar_y = 40
         
-        # Draw health text
+        # Draw the health value as text above the health bar
         health_text = font.render(f"Health: {self.health}", True, BLACK)
         surface.blit(health_text, (health_bar_x, health_bar_y - 30))  # Position text above the health bar
         
-        # Health bar background (red)
+        # Draw the health bar background (in red)
         pygame.draw.rect(surface, RED, (health_bar_x, health_bar_y, self.max_health, 10))
       
-        # Health bar fill (green)
+        # Draw the current health bar fill (in green)
         pygame.draw.rect(surface, GREEN, (health_bar_x, health_bar_y, self.health, 10))
     
     def draw_score(self, surface):
@@ -119,7 +129,7 @@ class Player(pygame.sprite.Sprite):
         score_text = font.render(f"Score: {self.score}", True, BLACK)
         surface.blit(score_text, (score_x, score_y))
 
-# Projectile class
+# ------------------ Projectile Class ------------------ #
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y, facing_right):
         super().__init__()
@@ -139,7 +149,7 @@ class Projectile(pygame.sprite.Sprite):
         if self.rect.x < camera_x or self.rect.x > camera_x + WIDTH:
             self.kill()
 
-# Enemy class
+# ------------------ Base Enemy Class ------------------ #
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, health=50):
         super().__init__()
@@ -182,7 +192,7 @@ class Enemy(pygame.sprite.Sprite):
             
         
         
-
+# ------------------ Specialized Enemy Classes ------------------ #
 class DogEnemy(Enemy):
     def __init__(self, x, y, health=50):
         super().__init__(x, y, health)
@@ -200,6 +210,7 @@ class DogEnemy(Enemy):
         # If the dog collides with the player, deal more damage
         if self.rect.colliderect(player.rect):
             player.take_damage(2)  # Dog attacks the player with damage 2
+            
 class SahurEnemy(Enemy):
     def __init__(self, x, y, health=50):
         super().__init__(x, y, health)
@@ -248,7 +259,7 @@ class BombardiloEnemy(Enemy):
             player.take_damage(3)  # Bombardilo attacks the player with damage 3
 
 
-# Collectible class
+# ------------------ Collectible and Subclass ------------------ #
 class Collectible(pygame.sprite.Sprite):
     def __init__(self, x, y, type):
         super().__init__()
@@ -265,7 +276,7 @@ class Heart(Collectible):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.type = type
 
-  # --- Level Loading Function ---
+# ------------------ Level Loader ------------------ #
 # This function will load different enemies and collectibles based on the level number  
 def load_level(level, all_sprites, enemies, collectibles):
     # Clear previous level's enemies and collectibles
@@ -299,7 +310,7 @@ def load_level(level, all_sprites, enemies, collectibles):
     all_sprites.add(collectibles)
 # Groups
 
-
+# ------------------ UI Display Functions ------------------ #
 def display_game_over():
     game_over_text = large_font.render("GAME OVER", True, BLACK)
     restart_text = font.render("Press R to Restart or Q to Quit", True, BLACK)
@@ -324,7 +335,9 @@ def display_level_complete():
     screen.blit(next_level_text, (WIDTH // 2 - next_level_text.get_width() // 2, HEIGHT // 2))
     pygame.display.flip()
 
+# ------------------ Main Game Function ------------------ #
 def maingame(level=1, current_score=0):
+    # Initialize sprite groups and player
     all_sprites = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     collectibles = pygame.sprite.Group()
@@ -361,6 +374,7 @@ def maingame(level=1, current_score=0):
         # Background scroll based on camera
         bg_scroll = camera_x % background_img.get_width()
 
+        # Draw scrolling background
         screen.blit(background_img, (-bg_scroll, 0))
         screen.blit(background_img, (-bg_scroll + background_img.get_width(), 0))
 
@@ -422,7 +436,8 @@ def maingame(level=1, current_score=0):
                         if event.key == pygame.K_q:  # Quit the game
                             waiting_for_input = False
                             running = False
-
+                            
+        # Level Complete check
         if len(enemies) == 0:
             if current_level == 3:
                 display_game_won()
@@ -457,4 +472,5 @@ def maingame(level=1, current_score=0):
 
     pygame.quit()
 
+# Start the game
 maingame()
