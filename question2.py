@@ -451,6 +451,9 @@ def maingame(level=1, current_score=0):
                             if event.key == pygame.K_r:  # Restart the game
                                 maingame()
                                 waiting_for_input = False
+                            if event.key == pygame.K_q:  # Quit the game
+                                pygame.quit()
+                                sys.exit()
             display_level_complete()
             waiting_for_input = True
             while waiting_for_input:
