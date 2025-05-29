@@ -1,10 +1,6 @@
 # --- Display a message to inform the user that some libraries must be installed before running the script ---
 print("Before running this script, make sure you have installed the required libraries:")
-
-# --- Provide the user with instructions on how to install the necessary libraries ---
 print("To install the necessary libraries, run:")
-
-# --- Show the exact pip command to install OpenCV and Pillow ---
 print("'pip install opencv-python' and 'pip install pillow'")
 
 # --- Import necessary libraries ---
@@ -520,6 +516,7 @@ class PhotoEditorApp:
             cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
         return ImageTk.PhotoImage(Image.fromarray(cv_image))
 
+# --- Run the application ---
 if __name__ == "__main__":
     root = tk.Tk()
     app = PhotoEditorApp(root)
