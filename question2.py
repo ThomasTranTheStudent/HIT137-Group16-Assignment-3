@@ -314,23 +314,29 @@ def load_level(level, all_sprites, enemies, collectibles):
 def display_game_over():
     game_over_text = large_font.render("GAME OVER", True, BLACK)
     restart_text = font.render("Press R to Restart or Q to Quit", True, BLACK)
+    current_score_text = font.render(f"Current Score: {player.score}", True, BLACK)
     screen.fill(WHITE)
+    screen.blit(current_score_text, (WIDTH // 2 - current_score_text.get_width() // 2, HEIGHT // 4))
     screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 3))
     screen.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, HEIGHT // 2))
     pygame.display.flip()
 
-def display_game_won():
+def display_game_won(player):
     game_won_text = large_font.render("YOU WON!", True, BLACK)
+    high_score_text = font.render(f"Final Score: {player.score}", True, BLACK)
     restart_text = font.render("Press R to Restart or Q to Quit", True, BLACK)
     screen.fill(WHITE)
+    screen.blit(high_score_text, (WIDTH // 2 - high_score_text.get_width() // 2, HEIGHT // 4))
     screen.blit(game_won_text, (WIDTH // 2 - game_won_text.get_width() // 2, HEIGHT // 3))
     screen.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, HEIGHT // 2))
     pygame.display.flip()
 
-def display_level_complete():
+def display_level_complete(player):
     level_complete_text = large_font.render("LEVEL COMPLETE", True, BLACK)
     next_level_text = font.render("Press N for Next Level or Q to Quit", True, BLACK)
+    current_score_text = font.render(f"Current Score: {player.score}", True, BLACK)
     screen.fill(WHITE)
+    screen.blit(current_score_text, (WIDTH // 2 - current_score_text.get_width() // 2, HEIGHT // 4))
     screen.blit(level_complete_text, (WIDTH // 2 - level_complete_text.get_width() // 2, HEIGHT // 3))
     screen.blit(next_level_text, (WIDTH // 2 - next_level_text.get_width() // 2, HEIGHT // 2))
     pygame.display.flip()
@@ -423,7 +429,7 @@ def maingame(level=1, current_score=0):
          
         # Check player health
         if player.health <= 0:
-            display_game_over()
+            display_game_over(player)
             waiting_for_input = True
             while waiting_for_input:
                 for event in pygame.event.get():
@@ -441,7 +447,7 @@ def maingame(level=1, current_score=0):
         if len(enemies) == 0:
             # If it's the last level, display game won
             if current_level == 3:
-                display_game_won()
+                display_game_won(player)
                 waiting_for_input = True
                 while waiting_for_input:
                     for event in pygame.event.get():
@@ -456,7 +462,7 @@ def maingame(level=1, current_score=0):
                                 pygame.quit()
                                 sys.exit()
             # If not the last level, display level complete
-            display_level_complete()
+            display_level_complete(player)
             waiting_for_input = True
             while waiting_for_input:
                 for event in pygame.event.get():
