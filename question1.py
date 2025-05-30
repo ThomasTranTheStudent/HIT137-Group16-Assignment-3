@@ -35,7 +35,7 @@ class ImageManager:
         self.history = []          # Stack of previous states for undo
         self.redo_stack = []       # Stack of undone states for redo
     """"""
-    """Load image from file and initialize history."""
+   
     def load(self, path):
         """Load an image from disk into original/current/resize_base, clear history."""
         img = cv2.imread(path)
@@ -48,7 +48,7 @@ class ImageManager:
         self.history.clear()
         self.redo_stack.clear()
 
-    """Save the current image to a file."""
+ 
     def save(self, path):
         """Save the current image to disk; raise error if save fails."""
         if self.current is None:
