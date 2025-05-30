@@ -439,6 +439,7 @@ def maingame(level=1, current_score=0):
                             
         # Level Complete check
         if len(enemies) == 0:
+            # If it's the last level, display game won
             if current_level == 3:
                 display_game_won()
                 waiting_for_input = True
@@ -454,6 +455,7 @@ def maingame(level=1, current_score=0):
                             if event.key == pygame.K_q:  # Quit the game
                                 pygame.quit()
                                 sys.exit()
+            # If not the last level, display level complete
             display_level_complete()
             waiting_for_input = True
             while waiting_for_input:
@@ -476,4 +478,6 @@ def maingame(level=1, current_score=0):
     pygame.quit()
 
 # Start the game
-maingame()
+if __name__ == "__main__":
+    # Start the game at level 1 with score 0
+    maingame()

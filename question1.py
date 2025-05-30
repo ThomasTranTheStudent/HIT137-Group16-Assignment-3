@@ -27,7 +27,7 @@ SAVE_FILETYPES = [("PNG", "*.png"), ("JPEG", "*.jpg"), ("All Files", "*.*")]    
 PREVIEW_SIZE = 200
 BLUR_KERNEL = (9, 9)
 
-# --- Image Manager Class ---
+# --- Image Manager Class --- #
 class ImageManager:
     """Handles all image operations and history for undo/redo."""
     def __init__(self):
@@ -36,7 +36,8 @@ class ImageManager:
         self.history = []
         self.redo_stack = []
         self.resize_base = None
-
+    """"""
+    """Load image from file and initialize history."""
     def load(self, path):
         img = cv2.imread(path)
         if img is None:
@@ -47,12 +48,14 @@ class ImageManager:
         self.history.clear()
         self.redo_stack.clear()
 
+    """Save the current image to a file."""
     def save(self, path):
         if self.current is None:
             raise ValueError("No image to save.")
         if not cv2.imwrite(path, self.current):
             raise ValueError("Failed to save image.")
 
+    """Push the current state to history for undo functionality."""
     def push_history(self):
         if self.current is not None:
             self.history.append(self.current.copy())
@@ -61,6 +64,7 @@ class ImageManager:
             if len(self.history) > 20:
                 self.history.pop(0)
 
+    """Crop the current image based on provided coordinates."""
     def crop(self, coords):
         x1, y1, x2, y2 = coords
         h, w = self.current.shape[:2]
