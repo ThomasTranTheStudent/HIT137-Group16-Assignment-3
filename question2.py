@@ -131,7 +131,7 @@ class Player(pygame.sprite.Sprite):
 
 # ------------------ Projectile Class ------------------ #
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, x, y, facing_right):
+    def __init__(self, x, y, facing_right=True):
         super().__init__()
         self.image = bullet_img
         self.image = pygame.transform.scale(self.image, (20, 25))
@@ -141,12 +141,31 @@ class Projectile(pygame.sprite.Sprite):
         self.damage = 10
 
     def update(self):
-        
         self.rect.x += self.speed * self.direction
-        # Check if the projectile is off-screen
-        # Adjust the check to account for the camera offset
-        camera_x = self.rect.centerx - WIDTH // 2
-        if self.rect.x < camera_x or self.rect.x > camera_x + WIDTH:
+        # Remove if off screen
+        if self.rect.right < 0 or self.rect.left > WIDTH:
+            self.kill()
+
+class BombProjectile(Projectile):
+    def __init__(self, x, y, target_x, target_y):
+        # Call Projectile's __init__ with dummy facing_right (not used)
+        super().__init__(x, y, True)
+        self.image = pygame.transform.scale(bullet_img, (30, 30))
+        self.rect = self.image.get_rect(center=(x, y))
+        # Calculate direction vector
+        dx = target_x - x
+        dy = target_y - y
+        dist = max((dx ** 2 + dy ** 2) ** 0.5, 1)
+        self.speed = 7
+        self.vel_x = self.speed * dx / dist
+        self.vel_y = self.speed * dy / dist
+
+    def update(self):
+        self.rect.x += self.vel_x
+        self.rect.y += self.vel_y
+        # Remove if off screen
+        if (self.rect.right < 0 or self.rect.left > WIDTH or
+            self.rect.bottom < 0 or self.rect.top > HEIGHT):
             self.kill()
 
 # ------------------ Base Enemy Class ------------------ #
@@ -180,16 +199,20 @@ class Enemy(pygame.sprite.Sprite):
             player.increase_score(10)  # Increase player's score when enemy is killed
     
     def display_health(self, surface, camera_x):
-        # Display enemy health above the enemy
-        # health_text = font.render(f"Health: {self.health}", True, BLACK)
-        # surface.blit(health_text, (self.rect.x - camera_x, self.rect.y - 30))
-        # Draw health bar
-        health_bar_x = self.rect.x
+        # Display enemy health bar centered above the enemy
+        bar_width = 50
+        bar_height = 5
+        health_ratio = max(self.health / 50, 0)  # Assuming max health is 50 for base Enemy
+        fill_width = int(bar_width * health_ratio)
+
+        # Center the bar above the enemy
+        health_bar_x = self.rect.x + (self.rect.width // 2) - (bar_width // 2)
         health_bar_y = self.rect.y - 10
-    
-        pygame.draw.rect(surface, RED, (health_bar_x - camera_x, health_bar_y, 50, 5))  # Background
-        pygame.draw.rect(surface, GREEN, (health_bar_x - camera_x, health_bar_y, self.health, 5))  # Fill the health bar
-            
+
+        # Draw background
+        pygame.draw.rect(surface, RED, (health_bar_x - camera_x, health_bar_y, bar_width, bar_height))
+        # Draw health fill
+        pygame.draw.rect(surface, GREEN, (health_bar_x - camera_x, health_bar_y, fill_width, bar_height))
         
         
 # ------------------ Specialized Enemy Classes ------------------ #
@@ -246,6 +269,9 @@ class BombardiloEnemy(Enemy):
         self.image = pygame.transform.scale(self.image, (300, 300))
         self.rect = self.image.get_rect(topleft=(x, y))
         self.speed = 2
+        self.shoot_cooldown = 40  # frames between shots
+        self.shoot_timer = 0
+        self.projectiles = pygame.sprite.Group()
 
     def update(self, player):
         # Move towards the player with increased speed
@@ -257,6 +283,21 @@ class BombardiloEnemy(Enemy):
         # If the bombardilo collides with the player, deal more damage
         if self.rect.colliderect(player.rect):
             player.take_damage(3)  # Bombardilo attacks the player with damage 3
+
+        # Handle shooting at the player
+        self.shoot_timer += 1
+        if self.shoot_timer >= self.shoot_cooldown:
+            self.shoot_timer = 0
+            self.shoot_at_player(player)
+
+        self.projectiles.update()
+
+    def shoot_at_player(self, player):
+        # Shoot a projectile towards the player's current position
+        proj = BombProjectile(self.rect.centerx, self.rect.centery, player.rect.centerx, player.rect.centery)
+        self.projectiles.add(proj)
+
+
 
 
 # ------------------ Collectible and Subclass ------------------ #
@@ -311,7 +352,7 @@ def load_level(level, all_sprites, enemies, collectibles):
 # Groups
 
 # ------------------ UI Display Functions ------------------ #
-def display_game_over():
+def display_game_over(player):
     game_over_text = large_font.render("GAME OVER", True, BLACK)
     restart_text = font.render("Press R to Restart or Q to Quit", True, BLACK)
     current_score_text = font.render(f"Current Score: {player.score}", True, BLACK)
@@ -349,10 +390,7 @@ def maingame(level=1, current_score=0):
     collectibles = pygame.sprite.Group()
     player = Player(current_score)
 
-    # all_sprites.add(player)   # We'll manually draw with camera offset
     all_sprites.add(player.projectiles)  # We'll draw projectiles manually too
-
-    
 
     bg_scroll = 0
     current_level = level
@@ -411,13 +449,23 @@ def maingame(level=1, current_score=0):
         for projectile in player.projectiles:
             screen.blit(projectile.image, (projectile.rect.x - camera_x, projectile.rect.y))
 
-        # Enemies
+        # Enemies and their projectiles
         for enemy in enemies:
             enemy.display_health(screen, camera_x)  # Display enemy health above the enemy
             enemy.update(player)
-            
             screen.blit(enemy.image, (enemy.rect.x - camera_x, enemy.rect.y))
-            
+
+            # Draw and update enemy projectiles if they have any
+            if hasattr(enemy, "projectiles"):
+                enemy.projectiles.update()
+                for e_proj in enemy.projectiles:
+                    screen.blit(e_proj.image, (e_proj.rect.x - camera_x, e_proj.rect.y))
+
+                # Collision: enemy projectiles hit player
+                for e_proj in enemy.projectiles:
+                    if player.rect.colliderect(e_proj.rect):
+                        player.take_damage(getattr(e_proj, "damage", 10))
+                        e_proj.kill()
 
         # Collectibles
         for collectible in collectibles:
@@ -447,7 +495,7 @@ def maingame(level=1, current_score=0):
         if len(enemies) == 0:
             # If it's the last level, display game won
             if current_level == 3:
-                display_game_won(player)
+                display_game_won(player) 
                 waiting_for_input = True
                 while waiting_for_input:
                     for event in pygame.event.get():
@@ -478,8 +526,6 @@ def maingame(level=1, current_score=0):
                             sys.exit()
                     
         pygame.display.flip()    
-
-        
 
     pygame.quit()
 
